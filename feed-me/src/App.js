@@ -1,5 +1,5 @@
 import React from "react";
-import{
+import {
   GoogleMap,
   useLoadScript,
   Marker,
@@ -26,12 +26,13 @@ const options = {
   zoomControl: true,
 };
 
-export default function App(){
+export default function App() {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
     libraries,
   });
   const [markers, setMarkers] = React.useState([]);
+  const [selected, setSelected] = React.useState(null);
 
   const onMapClick = React.useCallback((event) => {
     setMarkers((current) => [
@@ -40,12 +41,12 @@ export default function App(){
         lat: event.latLng.lat(),
         lng: event.latLng.lng(),
         time: new Date(),
-        
+
       },
     ]);
     //console.log(event.latLng.lat());
   }, []);
-  
+
   const mapRef = React.useRef();  //retain state without cause re-render
   const mapLoadCall = React.useCallback((map) => {
     mapRef.current = map;
@@ -55,28 +56,44 @@ export default function App(){
   if (!isLoaded) return "Loading map";
 
   return (
-  <div>
-    <h1>Feed Me {" "} <span role="img" aria-label="cat">🐱</span> </h1>
-    <GoogleMap 
-      mapContainerStyle = {mapContainerStyle} 
-      zoom={8} 
-      center={center} 
-      options={options}
-      onClick={onMapClick}
-    >
-      {markers.map((marker) =>(
-        <Marker key={marker.time.toISOString()}
-        position={{lat: marker.lat, lng: marker.lng}}
-        icon={{
-          url: '/test-food.png',
-          scaledSize: new window.google.maps.Size(50,50),
-          origin: new window.google.maps.Point(0,0),
-          anchor: new window.google.maps.Point(25,25),
-        }}
-        />
-      ))}
+    <div>
+      <h1>Feed Me {" "} <span role="img" aria-label="cat">🐱</span> </h1>
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        zoom={8}
+        center={center}
+        options={options}
+        onClick={onMapClick}
+      >
+        {markers.map((marker) => (
+          <Marker key={marker.time.toISOString()}
+            position={{ lat: marker.lat, lng: marker.lng }}
+            icon={{
+              url: '/test-food.png',
+              scaledSize: new window.google.maps.Size(50, 50),
+              origin: new window.google.maps.Point(0, 0),
+              anchor: new window.google.maps.Point(25, 25),
+            }}
+            onClick={() => {
+              setSelected(marker);
+            }}
+          />
+        ))}
 
-    </GoogleMap>
-  </div>
+        {selected ? (
+          <InfoWindow position={{ lat: selected.lat, lng: selected.lng }}
+            onCloseClick={() => {
+              setSelected(null);
+            }}
+          >
+            <div>
+              <h2>Food is there</h2>
+              <p>Dropped at {formatRelative(selected.time, new Date())}</p>
+            </div>
+          </InfoWindow>
+        ) : null}
+
+      </GoogleMap>
+    </div>
   );
 }
